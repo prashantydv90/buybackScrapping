@@ -1,9 +1,9 @@
-// components/BuybackTable.jsx
 import { useEffect, useState } from "react";
-import { getBuybacks } from "../api";
+import { getBuybacks, syncBuybacks } from "../api";
 
 export default function BuybackTable() {
   const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     load();
@@ -16,43 +16,56 @@ export default function BuybackTable() {
     setData(res.data);
   }
 
+  async function insertData() {
+    try {
+      setLoading(true);
+      await syncBuybacks();   // 🔥 trigger backend fetch
+      await load();           // refresh table after insert
+    } catch (err) {
+      console.error("Sync failed:", err);
+    } finally {
+      setLoading(false);
+    }
+  }
+
   return (
-    <table>
-      <thead>
-        <tr>
-          <th>Symbol</th>
-          <th>Company</th>
-          <th>Subject</th>
-          <th>Broadcast Time</th>
-          <th>Report</th>
-          <th>XBRL</th>
-        </tr>
-      </thead>
-      <tbody>
-        {data.map((d) => (
-          <tr key={d._id}>
-            <td>{d.symbol}</td>
-            <td>{d.companyName}</td>
-            <td>{d.subject}</td>
-            <td>{new Date(d.broadcastAt).toLocaleString()}</td>
-            <td>
-              {d.pdfUrl && (
-                <a href={d.pdfUrl} target="_blank" rel="noopener noreferrer">
-                  PDF
-                </a>
-              )}
-            </td>
-            <td>
-              {d.xbrlUrl && (
-                <a href={d.xbrlUrl} target="_blank" rel="noopener noreferrer">
-                  XBRL
-                </a>
-              )}
-            </td>
+    <>
+      {/* <button onClick={insertData} disabled={loading}>
+        {loading ? "Fetching..." : "Fetch Latest Announcements"}
+      </button> */}
+
+      <table>
+        <thead>
+          <tr>
+            <th>Symbol</th>
+            <th>Company</th>
+            <th>Subject</th>
+            <th>Broadcast Time</th>
+            <th>Report</th>
           </tr>
-        ))}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          {data.map((d) => (
+            <tr key={d._id}>
+              <td>{d.symbol}</td>
+              <td>{d.companyName}</td>
+              <td>{d.desc}</td>
+              <td>{new Date(d.broadcastAt).toLocaleString()}</td>
+              <td>
+                {d.pdfUrl && (
+                  <a
+                    href={d.pdfUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    PDF
+                  </a>
+                )}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </>
   );
 }
-

@@ -2,8 +2,9 @@ import express from "express";
 import mongoose from "mongoose";
 import cors from "cors";
 import buybacksRouter from "./routes/buybacks.js";
-import "./cron/fetchNse.js";
+// import "./cron/fetchNse.js";
 import dotenv from "dotenv";
+import { startBuybackCron } from "./cron/fetchBuyback.js";
 dotenv.config();
 
 const app = express();
@@ -15,9 +16,17 @@ app.use(cors());
 app.use(express.json());
 
 // Connect to MongoDB
-mongoose.connect(MONGODB_URI)
-  .then(() => console.log("Connected to MongoDB"))
-  .catch((err) => console.error("MongoDB connection error:", err));
+mongoose
+  .connect(MONGODB_URI)
+  .then(() => {
+    console.log("Connected to MongoDB");
+
+    // 🔥 START CRON ONLY AFTER DB IS CONNECTED
+    startBuybackCron();
+  })
+  .catch((err) =>
+    console.error("MongoDB connection error:", err)
+  );
 
 // Routes
 app.use("/api/buybacks", buybacksRouter);
